@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vi-TCM AI: Clinical Decision Support</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col font-sans">
+
+    <header class="bg-white shadow-sm border-b border-slate-200 px-8 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="bg-emerald-600 text-white p-2 rounded-lg"><i class="fas fa-leaf"></i></div>
+            <h1 class="text-2xl font-bold text-slate-800">Vi-TCM AI Assistant</h1>
+        </div>
+        <div class="text-sm text-slate-500 font-medium">Pharmacological Topology Engine</div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+        
+        <div class="w-1/3 bg-white border-r border-slate-200 p-6 flex flex-col">
+            <h2 class="text-lg font-bold mb-4"><i class="fas fa-search mr-2"></i> Pharmacopoeia Database</h2>
+            <input type="text" id="searchInput" placeholder="Search herbs..." class="w-full bg-slate-100 border border-slate-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            
+            <div id="herbList" class="flex-1 overflow-y-auto space-y-2 pr-2">
+                <div class="text-center text-slate-400 mt-10"><i class="fas fa-spinner fa-spin text-2xl"></i><br>Loading herbs from AI Engine...</div>
+            </div>
+        </div>
+
+        <div class="w-1/3 bg-slate-50 p-6 flex flex-col border-r border-slate-200">
+            <h2 class="text-lg font-bold mb-4"><i class="fas fa-mortar-pestle mr-2"></i> Digital Prescription Bowl</h2>
+            
+            <div id="prescriptionBowl" class="flex-1 bg-white rounded-xl shadow-inner border-2 border-dashed border-slate-300 p-4 flex flex-wrap content-start gap-2 overflow-y-auto">
+                <p id="emptyState" class="text-slate-400 text-sm w-full text-center mt-10">Click herbs from the left to add them to your formulation.</p>
+                </div>
+
+            <button id="analyzeBtn" class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 flex justify-center items-center opacity-50 cursor-not-allowed" disabled>
+                <i class="fas fa-microscope mr-2"></i> Analyze Topological Synergy
+            </button>
+        </div>
+
+        <div class="w-1/3 bg-white p-6 flex flex-col">
+            <h2 class="text-lg font-bold mb-4"><i class="fas fa-chart-network mr-2"></i> Macroscopic Synergy Output</h2>
+            
+            <div id="resultsPanel" class="hidden flex-col h-full">
+                <div class="bg-slate-900 rounded-xl p-6 text-center text-white shadow-lg mb-6 relative overflow-hidden">
+                    <div class="text-sm font-bold text-emerald-400 uppercase tracking-wide mb-1">Predicted Synergy Score</div>
+                    <div class="text-5xl font-black" id="scoreDisplay">0%</div>
+                    <div class="text-xs text-slate-400 mt-2" id="loopDisplay">0 Synergistic Loops Detected</div>
+                    <i class="fas fa-atom absolute -right-4 -bottom-4 text-7xl text-white opacity-10"></i>
+                </div>
+
+                <div class="flex-1 relative">
+                    <h3 class="text-sm font-bold text-slate-600 mb-2">Pharmacological Betti Curves (H0/H1)</h3>
+                    <canvas id="tdaChart"></canvas>
+                </div>
+            </div>
+
+            <div id="loadingPanel" class="hidden flex-col items-center justify-center h-full text-emerald-600">
+                <i class="fas fa-circle-notch fa-spin text-5xl mb-4"></i>
+                <p class="font-medium animate-pulse">Computing Euclidean Manifold...</p>
+            </div>
+            
+            <div id="waitingPanel" class="flex flex-col items-center justify-center h-full text-slate-300">
+                <i class="fas fa-project-diagram text-7xl mb-4"></i>
+                <p class="text-center font-medium px-8 text-slate-400">Add 3 or more herbs and click Analyze to view structural synergy.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // REPLACE THIS WITH YOUR HUGGING FACE URL
+        // ==========================================
+        const API_URL = "https://vothikimanh-vitcm-ai-engine.hf.space"; 
+        
+        let allHerbs = [];
+        let selectedHerbs = new Set();
+        let chartInstance = null;
+
+        // Fetch Herbs on load
+        async function fetchHerbs() {
+            try {
+                const res = await fetch(`${API_URL}/api/herbs`);
+                const data = await res.json();
+                allHerbs = data.herbs;
+                renderHerbList(allHerbs);
+            } catch (e) {
+                document.getElementById('herbList').innerHTML = `<p class="text-red-500 text-sm p-4">Error connecting to AI Backend. Ensure Hugging Face Space is running.</p>`;
+            }
+        }
+
+        function renderHerbList(herbs) {
+            const list = document.getElementById('herbList');
+            list.innerHTML = '';
+            herbs.forEach(herb => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition font-medium text-sm flex justify-between items-center";
+                div.innerHTML = `<span>${herb}</span> <i class="fas fa-plus text-emerald-500 opacity-0 group-hover:opacity-100"></i>`;
+                div.onclick = () => toggleHerb(herb);
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            renderHerbList(allHerbs.filter(h => h.toLowerCase().includes(term)));
+        });
+
+        function toggleHerb(herb) {
+            if (selectedHerbs.has(herb)) {
+                selectedHerbs.delete(herb);
+            } else {
+                selectedHerbs.add(herb);
+            }
+            updatePrescriptionBowl();
+        }
+
+        function updatePrescriptionBowl() {
+            const bowl = document.getElementById('prescriptionBowl');
+            const emptyState = document.getElementById('emptyState');
+            const btn = document.getElementById('analyzeBtn');
+
+            // Clear bowl (except empty state)
+            Array.from(bowl.children).forEach(c => { if(c.id !== 'emptyState') c.remove(); });
+
+            if (selectedHerbs.size === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                selectedHerbs.forEach(herb => {
+                    const chip = document.createElement('div');
+                    chip.className = "bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-sm font-bold flex items-center shadow-sm";
+                    chip.innerHTML = `${herb} <i class="fas fa-times ml-2 cursor-pointer hover:text-red-500" onclick="toggleHerb('${herb}')"></i>`;
+                    bowl.appendChild(chip);
+                });
+            }
+
+            // Enable button only if >= 3 herbs are selected
+            if (selectedHerbs.size >= 3) {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.disabled = false;
+            } else {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.disabled = true;
+            }
+        }
+
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            document.getElementById('waitingPanel').classList.add('hidden');
+            document.getElementById('resultsPanel').classList.add('hidden');
+            document.getElementById('loadingPanel').classList.remove('hidden');
+            document.getElementById('loadingPanel').classList.add('flex');
+
+            try {
+                const response = await fetch(`${API_URL}/api/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ herbs: Array.from(selectedHerbs) })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Update UI
+                document.getElementById('scoreDisplay').innerText = data.synergy_score + "%";
+                document.getElementById('loopDisplay').innerText = `H1: ${data.h1_loops} Multi-target Loops Detected`;
+                
+                renderChart(data.betti_0, data.betti_1, data.max_radius);
+
+                document.getElementById('loadingPanel').classList.add('hidden');
+                document.getElementById('loadingPanel').classList.remove('flex');
+                document.getElementById('resultsPanel').classList.remove('hidden');
+                document.getElementById('resultsPanel').classList.add('flex');
+
+            } catch (e) {
+                alert("AI Engine computation failed. Check console for details.");
+                console.error(e);
+            }
+        });
+
+        function renderChart(betti0, betti1, maxRadius) {
+            const ctx = document.getElementById('tdaChart').getContext('2d');
+            const labels = Array.from({length: 50}, (_, i) => ((i / 49) * maxRadius).toFixed(1));
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Betti-0 (Components)',
+                            data: betti0,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Betti-1 (Synergy Loops)',
+                            data: betti1,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Euclidean Radius' } },
+                        y: { title: { display: true, text: 'Betti Count' } }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        fetchHerbs();
+    </script>
+</body>
+</html>
