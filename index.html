@@ -162,18 +162,14 @@
     </div>
 
     <script>
-        // =========================================================================
-        // YOUR API URL
-        // =========================================================================
         const API_URL = "https://vothikimanh-vitcm-ai-engine.hf.space"; 
         
         let allHerbs = [];
         let selectedHerbs = new Set();
         let chartInstance = null;
-        let lastAnalysisData = null; // Store data to re-render chart on lang toggle
+        let lastAnalysisData = null; 
         let currentLang = 'en';
 
-        // --- I18N DICTIONARY ---
         const i18n = {
             en: {
                 title: "Vi-TCM AI Assistant", subtitle: "Topological Synergy Engine",
@@ -185,25 +181,17 @@
                 forPatient: "For Patients & Public", disclaimer: "* Disclaimer: Always consult a licensed medical professional before use.",
                 computing: "Computing Euclidean Manifold...", waitingMsg: "Waiting for input. The AI will mathematically evaluate your prescription's multi-target synergy mechanisms.",
                 footerRights: "All rights reserved.", footerPaper: "Based on the research paper:",
-                
-                // Chart & Alerts
                 cLabel0: "Betti-0 (Pharmacological Components)", cLabel1: "Betti-1 (Synergistic Interactions)",
                 cX: "Euclidean Radius", cY: "Topological Feature Count", apiErr: "Backend Offline. Please ensure Hugging Face Space is running.",
-                
-                // Recommendations (High)
                 docHigh: "<strong>High Structural Complexity:</strong> Detected {L} topological $H_1$ loops in the Euclidean manifold. This suggests strong multi-target binding capabilities. Ideal formulation for chronic, complex syndromes.",
                 nurHigh: "<strong>High Potency:</strong> This is a highly synergistic formulation. Ensure strict adherence to prescribed dosage. Monitor patient vitals closely.",
                 patHigh: "<strong>Excellent Compatibility:</strong> The herbs in this prescription work together like a well-coordinated team to target multiple aspects of your illness at once.",
-                // Recommendations (Med)
                 docMed: "<strong>Moderate Connectivity:</strong> Topological network shows baseline clustering ($H_0$) with limited $H_1$ cycles. Suitable for localized treatments. Consider adding 'Courier' herbs.",
                 nurMed: "<strong>Standard Protocol:</strong> Administer as per standard clinical guidelines. Observe for general symptom improvement.",
                 patMed: "<strong>Good Compatibility:</strong> These herbs support each other nicely to treat your specific symptoms. It is a stable remedy.",
-                // Recommendations (Low)
                 docLow: "<strong>Low Synergy Signature:</strong> Minimal topological interaction detected. Geometrically isolated nodes. May result in poor clinical efficacy for systemic diseases.",
                 nurLow: "<strong>Observation Needed:</strong> Due to low interaction, clinical results may be slower. Report any lack of improvement.",
                 patLow: "<strong>Basic Interaction:</strong> These herbs act independently. It is safe, but it may take longer to see full results.",
-                
-                // Modal
                 mTitle: "User Guide & Documentation", mIntro: "Welcome to the <strong>Topological CDSS Platform</strong>. This tool translates traditional medicine knowledge into mathematical algorithms.",
                 m1Title: "Select Your Herbs", m1Desc: "Search the Pharmacopoeia database on the left. Click on herbs to add them to the central Digital Prescription Bowl. A minimum of 3 herbs is required.",
                 m2Title: "Execute Topological Analysis", m2Desc: "Click <strong>Analyze Topological Synergy</strong>. The AI converts properties into binary vectors and uses Persistent Homology to find geometric structures.",
@@ -220,10 +208,8 @@
                 forPatient: "Cho Bệnh Nhân", disclaimer: "* Cảnh báo: Luôn tham khảo ý kiến bác sĩ trước khi sử dụng.",
                 computing: "Đang tính toán Đa tạp Euclidean...", waitingMsg: "Hệ thống AI đang đợi dữ liệu bài thuốc để phân tích cơ chế hiệp đồng đa mục tiêu.",
                 footerRights: "Đã đăng ký bản quyền.", footerPaper: "Dựa trên nghiên cứu:",
-                
                 cLabel0: "Betti-0 (Cụm Dược Lý)", cLabel1: "Betti-1 (Vòng lặp Hiệp Đồng)",
                 cX: "Bán kính Euclidean", cY: "Số lượng Tô pô", apiErr: "Máy chủ AI ngoại tuyến. Đảm bảo Hugging Face Space đang chạy.",
-                
                 docHigh: "<strong>Độ phức tạp cấu trúc cao:</strong> Phát hiện {L} vòng lặp tô pô $H_1$. Thể hiện cơ chế tác động đa mục tiêu cực mạnh. Bài thuốc lý tưởng cho hội chứng mạn tính, phức tạp.",
                 nurHigh: "<strong>Dược lực mạnh:</strong> Cần tuân thủ nghiêm ngặt liều lượng kê đơn. Theo dõi sát sao sinh hiệu của bệnh nhân sau liều đầu tiên do tính hiệp đồng cao.",
                 patHigh: "<strong>Tương thích hoàn hảo:</strong> Các vị thuốc kết hợp cực kỳ ăn ý, giúp điều trị nhiều triệu chứng cùng lúc. Vui lòng uống thuốc đúng chỉ dẫn.",
@@ -233,7 +219,6 @@
                 docLow: "<strong>Tương tác rời rạc:</strong> Ít vòng lặp hình học được tìm thấy. Các vị thuốc hoạt động độc lập. Ít có tác dụng đối với bệnh lý toàn thân.",
                 nurLow: "<strong>Cần theo dõi thêm:</strong> Thuốc có tác dụng chậm. Hãy báo cáo lại với bác sĩ nếu bệnh nhân không thấy thuyên giảm.",
                 patLow: "<strong>Tương tác cơ bản:</strong> Các vị thuốc làm việc độc lập. Sẽ cần một thời gian để thấy rõ hiệu quả, bạn hãy kiên nhẫn nhé.",
-
                 mTitle: "Hướng Dẫn Sử Dụng", mIntro: "Chào mừng bạn đến với <strong>Hệ thống CDSS Tô Pô</strong>. Công cụ này chuyển đổi kiến thức y học cổ truyền thành thuật toán.",
                 m1Title: "Chọn Vị Thuốc", m1Desc: "Tìm kiếm trên Dược điển (cột trái) và click chọn các vị thuốc để đưa vào Bát thuốc. Cần tối thiểu 3 vị.",
                 m2Title: "Phân Tích AI", m2Desc: "Nhấn nút <strong>Phân Tích Hiệp Đồng</strong>. Hệ thống tính toán không gian đa chiều và tìm các cấu trúc hình học (Persistent Homology).",
@@ -245,7 +230,6 @@
         function toggleLanguage() {
             currentLang = currentLang === 'en' ? 'vi' : 'en';
             
-            // Toggle Button Styles
             if(currentLang === 'en') {
                 document.getElementById('btnEN').className = "px-3 py-1 rounded-full bg-emerald-600 text-white transition";
                 document.getElementById('btnVI').className = "px-3 py-1 rounded-full text-slate-500 hover:text-slate-700 transition";
@@ -254,17 +238,13 @@
                 document.getElementById('btnEN').className = "px-3 py-1 rounded-full text-slate-500 hover:text-slate-700 transition";
             }
 
-            // Apply Dictionary to UI
             const t = i18n[currentLang];
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (t[key]) el.innerHTML = t[key];
             });
             
-            // Update Placeholders
             document.getElementById('searchInput').placeholder = t.searchPh;
-
-            // Update Modal
             document.getElementById('mTitle').innerHTML = t.mTitle;
             document.getElementById('mIntro').innerHTML = t.mIntro;
             document.getElementById('m1Title').innerHTML = t.m1Title;
@@ -275,51 +255,33 @@
             document.getElementById('m3Desc').innerHTML = t.m3Desc;
             document.getElementById('mBtn').innerHTML = t.mBtn;
 
-            // Re-render recommendations & chart if analysis exists
+            // Re-render chart text if data exists
             if (lastAnalysisData) {
-                document.getElementById('loopDisplay').innerText = `${lastAnalysisData.loops} ${t.loopText}`;
-                generateComprehensiveRecommendations(lastAnalysisData.score, lastAnalysisData.loops);
-                renderChart(lastAnalysisData.betti0, lastAnalysisData.betti1, lastAnalysisData.maxRadius);
+                document.getElementById('loopDisplay').innerText = `${lastAnalysisData.h1_loops} ${t.loopText}`;
+                generateComprehensiveRecommendations(lastAnalysisData.synergy_score, lastAnalysisData.h1_loops);
+                renderChart(lastAnalysisData.betti_0, lastAnalysisData.betti_1, lastAnalysisData.max_radius);
             }
         }
 
-        // --- CORE LOGIC ---
         function toggleHelpModal() {
             document.getElementById('helpModal').classList.toggle('hidden');
         }
 
         async function fetchHerbs() {
-            console.log("✅ CHECKPOINT 1: fetchHerbs() has started!");
-    
-    try {
-        // 1. Test the bilingual dictionary
-        console.log("✅ CHECKPOINT 2: Checking language dictionary...");
-        document.getElementById('searchInput').placeholder = i18n[currentLang].searchPh;
-        
-        // 2. Test the API connection
-        console.log(`✅ CHECKPOINT 3: Attempting to connect to ${API_URL}/api/herbs`);
-        const res = await fetch(`${API_URL}/api/herbs`);
-        
-        // 3. Test the data structure
-        console.log("✅ CHECKPOINT 4: Connection made, parsing data...");
-        const data = await res.json();
-        console.log("📦 THE DATA RETURNED IS:", data);
-        
-        // 4. Fallback in case the API returns a list instead of a dictionary
-        allHerbs = data.herbs || data; 
-        
-        renderHerbList(allHerbs);
-        console.log("✅ CHECKPOINT 5: Success! Herbs rendered to the screen.");
-
-    } catch (e) {
-        console.error("❌ CRITICAL ERROR CAUGHT:", e);
-        document.getElementById('herbList').innerHTML = `
-            <div class="bg-red-50 text-red-600 p-3 rounded text-xs border border-red-200 text-center mx-2 mt-4">
-                <i class="fas fa-exclamation-triangle text-lg mb-1"></i><br>
-                Error: ${e.message}
-            </div>`;
-    }
-}
+            try {
+                document.getElementById('searchInput').placeholder = i18n[currentLang].searchPh;
+                const res = await fetch(`${API_URL}/api/herbs`);
+                const data = await res.json();
+                allHerbs = data.herbs || data; 
+                renderHerbList(allHerbs);
+            } catch (e) {
+                document.getElementById('herbList').innerHTML = `
+                    <div class="bg-red-50 text-red-600 p-3 rounded text-xs border border-red-200 text-center mx-2 mt-4">
+                        <i class="fas fa-exclamation-triangle text-lg mb-1"></i><br>
+                        Error: ${e.message}
+                    </div>`;
+            }
+        }
 
         function renderHerbList(herbs) {
             const list = document.getElementById('herbList');
@@ -345,56 +307,45 @@
         }
 
         function updatePrescriptionBowl() {
-    const bowl = document.getElementById('prescriptionBowl');
-    const analyzeBtn = document.getElementById('analyzeBtn'); // Grab the button
-    
-    // 1. Update the Bowl UI
-    if (selectedHerbs.size === 0) {
-        bowl.innerHTML = `<div class="text-slate-400 italic text-sm text-center py-4">${i18n[currentLang].emptyBowl}</div>`;
-    } else {
-        bowl.innerHTML = '';
-        selectedHerbs.forEach(herb => {
-            const tag = document.createElement('span');
-            tag.className = "inline-flex items-center px-3 py-1 m-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold shadow-sm transition hover:bg-emerald-200";
-            tag.innerHTML = `${herb} <i class="fas fa-times ml-2 cursor-pointer text-emerald-600 hover:text-red-500 transition" onclick="toggleHerb('${herb}')"></i>`;
-            bowl.appendChild(tag);
-        });
-    }
+            const bowl = document.getElementById('prescriptionBowl');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            if (selectedHerbs.size === 0) {
+                bowl.innerHTML = `<div class="text-slate-400 italic text-sm text-center py-4 w-full flex flex-col items-center mt-8"><i class="fas fa-hand-pointer text-3xl mb-3 text-slate-200"></i>${i18n[currentLang].emptyBowl}</div>`;
+            } else {
+                bowl.innerHTML = '';
+                selectedHerbs.forEach(herb => {
+                    const tag = document.createElement('span');
+                    tag.className = "inline-flex items-center px-3 py-1 m-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold shadow-sm transition hover:bg-emerald-200";
+                    tag.innerHTML = `${herb} <i class="fas fa-times ml-2 cursor-pointer text-emerald-600 hover:text-red-500 transition" onclick="toggleHerb('${herb}')"></i>`;
+                    bowl.appendChild(tag);
+                });
+            }
 
-    // 2. DYNAMIC BUTTON LOGIC: Wake up the button if 3 or more herbs are selected
-    if (selectedHerbs.size >= 3) {
-        analyzeBtn.disabled = false; // Enable clicking
-        analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed'); // Remove grayed-out look
-        analyzeBtn.classList.add('hover:bg-emerald-700', 'hover:-translate-y-0.5'); // Add hover animations
-    } else {
-        analyzeBtn.disabled = true; // Disable clicking
-        analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed'); // Add grayed-out look
-        analyzeBtn.classList.remove('hover:bg-emerald-700', 'hover:-translate-y-0.5'); // Remove hover animations
-    }
-}
+            if (selectedHerbs.size >= 3) {
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                analyzeBtn.classList.add('hover:bg-emerald-700', 'hover:-translate-y-0.5');
+            } else {
+                analyzeBtn.disabled = true;
+                analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                analyzeBtn.classList.remove('hover:bg-emerald-700', 'hover:-translate-y-0.5');
+            }
+        }
 
         async function analyzeSynergy() {
-            // Must have at least 3 herbs for Topological math
             if (selectedHerbs.size < 3) {
                 alert(i18n[currentLang].analyzeSub);
                 return;
             }
 
-            // UI Transitions: Hide welcome, show results, trigger loading state
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('analysisResults').classList.remove('hidden');
-            
-            const chartDiv = document.getElementById('chartContainer');
-            if (chartDiv) {
-                chartDiv.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-48 text-emerald-600">
-                        <i class="fas fa-circle-notch fa-spin fa-2x mb-2"></i>
-                        <p class="text-sm font-medium animate-pulse">${i18n[currentLang].computing}</p>
-                    </div>`;
-            }
+            // Hide Waiting, Show Loading
+            document.getElementById('waitingPanel').classList.add('hidden');
+            document.getElementById('resultsPanel').classList.add('hidden');
+            document.getElementById('loadingPanel').classList.remove('hidden');
+            document.getElementById('loadingPanel').classList.add('flex');
 
             try {
-                // Send selected herbs to Hugging Face Backend
                 const res = await fetch(`${API_URL}/api/analyze`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -404,22 +355,29 @@
                 if (!res.ok) throw new Error("Backend connection failed.");
                 
                 const data = await res.json();
+                if (data.error) throw new Error(data.error);
                 
-                // Save data so if the user clicks English/Vietnamese, the chart doesn't disappear
                 lastAnalysisData = data; 
 
-                // Update Score & Loops
-                document.getElementById('scoreDisplay').innerText = (data.score * 100).toFixed(1) + "%";
-                document.getElementById('loopDisplay').innerText = `${data.loops} ${i18n[currentLang].loopText}`;
+                // UPDATE SCORE AND LOOPS UI
+                document.getElementById('scoreDisplay').innerText = data.synergy_score + "%";
+                document.getElementById('loopDisplay').innerText = `${data.h1_loops} ${i18n[currentLang].loopText}`;
                 
-                // Generate Text & Chart
-                generateComprehensiveRecommendations(data.score, data.loops);
-                renderChart(data.betti0, data.betti1, data.maxRadius);
+                generateComprehensiveRecommendations(data.synergy_score, data.h1_loops);
+                renderChart(data.betti_0, data.betti_1, data.max_radius);
+
+                // Hide Loading, Show Results
+                document.getElementById('loadingPanel').classList.add('hidden');
+                document.getElementById('loadingPanel').classList.remove('flex');
+                document.getElementById('resultsPanel').classList.remove('hidden');
+                document.getElementById('resultsPanel').classList.add('flex');
 
             } catch (e) {
                 console.error("Analysis Error:", e);
                 alert(i18n[currentLang].apiErr);
-                if(chartDiv) chartDiv.innerHTML = `<p class="text-red-500 text-center mt-10"><i class="fas fa-exclamation-triangle"></i> ${i18n[currentLang].apiErr}</p>`;
+                document.getElementById('loadingPanel').classList.add('hidden');
+                document.getElementById('loadingPanel').classList.remove('flex');
+                document.getElementById('waitingPanel').classList.remove('hidden');
             }
         }
 
@@ -427,12 +385,11 @@
             const t = i18n[currentLang];
             let docTxt, nurTxt, patTxt;
 
-            // Logic matching the AI's topological synergy strength
-            if (loops >= 3 || score >= 0.7) {
-                docTxt = t.docHigh.replace('{L}', loops); // Replaces {L} with actual loop count
+            if (score >= 75) {
+                docTxt = t.docHigh.replace('{L}', loops);
                 nurTxt = t.nurHigh;
                 patTxt = t.patHigh;
-            } else if (loops > 0 || score >= 0.3) {
+            } else if (score >= 40) {
                 docTxt = t.docMed.replace('{L}', loops);
                 nurTxt = t.nurMed;
                 patTxt = t.patMed;
@@ -442,27 +399,24 @@
                 patTxt = t.patLow;
             }
 
-            document.getElementById('recDoc').innerHTML = docTxt;
-            document.getElementById('recNur').innerHTML = nurTxt;
-            document.getElementById('recPat').innerHTML = patTxt;
+            // THESE ARE THE IDs FIXED TO MATCH YOUR HTML
+            document.getElementById('recDoctor').innerHTML = docTxt;
+            document.getElementById('recNurse').innerHTML = nurTxt;
+            document.getElementById('recPatient').innerHTML = patTxt;
         }
 
         function renderChart(betti0, betti1, maxRadius) {
             const t = i18n[currentLang];
-            const container = document.getElementById('chartContainer');
             
-            // Rebuild the canvas
-            container.innerHTML = '<canvas id="bettiChart"></canvas>';
-            const ctx = document.getElementById('bettiChart').getContext('2d');
+            // MATCHED ID TO HTML
+            const ctx = document.getElementById('tdaChart').getContext('2d');
             
             if (chartInstance) {
                 chartInstance.destroy();
             }
 
-            // Create X-axis labels based on filtration steps
-            const labels = Array.from({length: betti0.length}, (_, i) => (i * (maxRadius / betti0.length)).toFixed(1));
+            const labels = Array.from({length: betti0.length}, (_, i) => ((i / (betti0.length - 1)) * maxRadius).toFixed(2));
 
-            // Draw Chart.js Graph
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -471,7 +425,7 @@
                         { 
                             label: t.cLabel0, 
                             data: betti0, 
-                            borderColor: '#3b82f6', // Blue
+                            borderColor: '#3b82f6', 
                             backgroundColor: 'rgba(59,130,246,0.1)', 
                             fill: true, 
                             tension: 0.3,
@@ -480,7 +434,7 @@
                         { 
                             label: t.cLabel1, 
                             data: betti1, 
-                            borderColor: '#10b981', // Emerald
+                            borderColor: '#10b981', 
                             backgroundColor: 'rgba(16,185,129,0.2)', 
                             fill: true, 
                             tension: 0.3,
@@ -491,35 +445,33 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
+                    interaction: { mode: 'index', intersect: false },
                     scales: { 
                         x: { 
-                            title: { display: true, text: t.cX },
-                            ticks: { maxTicksLimit: 10 }
+                            title: { display: true, text: t.cX, font: {size: 9} },
+                            ticks: { maxTicksLimit: 10, font: {size: 8} }
                         }, 
                         y: { 
-                            title: { display: true, text: t.cY }, 
-                            beginAtZero: true 
+                            title: { display: true, text: t.cY, font: {size: 9} }, 
+                            beginAtZero: true,
+                            ticks: { precision: 0, font: {size: 8} }
                         } 
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 10, font: {size: 9} } }
                     }
                 }
             });
         }
 
-        // ==========================================
-        // INITIALIZATION ALGORITHM
-        // ==========================================
-        // 1. Force the UI to apply the default language text immediately
+        // --- INIT ALGORITHM ---
         const defaultLangObj = i18n[currentLang];
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (defaultLangObj[key]) el.innerHTML = defaultLangObj[key];
         });
         
-        // 2. Fetch the dataset from Hugging Face
         fetchHerbs();
-
     </script>
+</body>
+</html>
