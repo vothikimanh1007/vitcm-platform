@@ -344,4 +344,170 @@
             updatePrescriptionBowl();
         }
 
-        function updatePrescriptionBowl()
+        function updatePrescriptionBowl() {
+            const bowl = document.getElementById('prescriptionBowl');
+            if (selectedHerbs.size === 0) {
+                // Show empty state text from dictionary
+                bowl.innerHTML = `<div class="text-slate-400 italic text-sm text-center py-4">${i18n[currentLang].emptyBowl}</div>`;
+                return;
+            }
+            
+            bowl.innerHTML = '';
+            selectedHerbs.forEach(herb => {
+                const tag = document.createElement('span');
+                tag.className = "inline-flex items-center px-3 py-1 m-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold shadow-sm transition hover:bg-emerald-200";
+                tag.innerHTML = `${herb} <i class="fas fa-times ml-2 cursor-pointer text-emerald-600 hover:text-red-500 transition" onclick="toggleHerb('${herb}')"></i>`;
+                bowl.appendChild(tag);
+            });
+        }
+
+        async function analyzeSynergy() {
+            // Must have at least 3 herbs for Topological math
+            if (selectedHerbs.size < 3) {
+                alert(i18n[currentLang].analyzeSub);
+                return;
+            }
+
+            // UI Transitions: Hide welcome, show results, trigger loading state
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('analysisResults').classList.remove('hidden');
+            
+            const chartDiv = document.getElementById('chartContainer');
+            if (chartDiv) {
+                chartDiv.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-48 text-emerald-600">
+                        <i class="fas fa-circle-notch fa-spin fa-2x mb-2"></i>
+                        <p class="text-sm font-medium animate-pulse">${i18n[currentLang].computing}</p>
+                    </div>`;
+            }
+
+            try {
+                // Send selected herbs to Hugging Face Backend
+                const res = await fetch(`${API_URL}/api/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ herbs: Array.from(selectedHerbs) })
+                });
+                
+                if (!res.ok) throw new Error("Backend connection failed.");
+                
+                const data = await res.json();
+                
+                // Save data so if the user clicks English/Vietnamese, the chart doesn't disappear
+                lastAnalysisData = data; 
+
+                // Update Score & Loops
+                document.getElementById('scoreDisplay').innerText = (data.score * 100).toFixed(1) + "%";
+                document.getElementById('loopDisplay').innerText = `${data.loops} ${i18n[currentLang].loopText}`;
+                
+                // Generate Text & Chart
+                generateComprehensiveRecommendations(data.score, data.loops);
+                renderChart(data.betti0, data.betti1, data.maxRadius);
+
+            } catch (e) {
+                console.error("Analysis Error:", e);
+                alert(i18n[currentLang].apiErr);
+                if(chartDiv) chartDiv.innerHTML = `<p class="text-red-500 text-center mt-10"><i class="fas fa-exclamation-triangle"></i> ${i18n[currentLang].apiErr}</p>`;
+            }
+        }
+
+        function generateComprehensiveRecommendations(score, loops) {
+            const t = i18n[currentLang];
+            let docTxt, nurTxt, patTxt;
+
+            // Logic matching the AI's topological synergy strength
+            if (loops >= 3 || score >= 0.7) {
+                docTxt = t.docHigh.replace('{L}', loops); // Replaces {L} with actual loop count
+                nurTxt = t.nurHigh;
+                patTxt = t.patHigh;
+            } else if (loops > 0 || score >= 0.3) {
+                docTxt = t.docMed.replace('{L}', loops);
+                nurTxt = t.nurMed;
+                patTxt = t.patMed;
+            } else {
+                docTxt = t.docLow.replace('{L}', loops);
+                nurTxt = t.nurLow;
+                patTxt = t.patLow;
+            }
+
+            document.getElementById('recDoc').innerHTML = docTxt;
+            document.getElementById('recNur').innerHTML = nurTxt;
+            document.getElementById('recPat').innerHTML = patTxt;
+        }
+
+        function renderChart(betti0, betti1, maxRadius) {
+            const t = i18n[currentLang];
+            const container = document.getElementById('chartContainer');
+            
+            // Rebuild the canvas
+            container.innerHTML = '<canvas id="bettiChart"></canvas>';
+            const ctx = document.getElementById('bettiChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Create X-axis labels based on filtration steps
+            const labels = Array.from({length: betti0.length}, (_, i) => (i * (maxRadius / betti0.length)).toFixed(1));
+
+            // Draw Chart.js Graph
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: t.cLabel0, 
+                            data: betti0, 
+                            borderColor: '#3b82f6', // Blue
+                            backgroundColor: 'rgba(59,130,246,0.1)', 
+                            fill: true, 
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        { 
+                            label: t.cLabel1, 
+                            data: betti1, 
+                            borderColor: '#10b981', // Emerald
+                            backgroundColor: 'rgba(16,185,129,0.2)', 
+                            fill: true, 
+                            tension: 0.3,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: { 
+                        x: { 
+                            title: { display: true, text: t.cX },
+                            ticks: { maxTicksLimit: 10 }
+                        }, 
+                        y: { 
+                            title: { display: true, text: t.cY }, 
+                            beginAtZero: true 
+                        } 
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // INITIALIZATION ALGORITHM
+        // ==========================================
+        // 1. Force the UI to apply the default language text immediately
+        const defaultLangObj = i18n[currentLang];
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (defaultLangObj[key]) el.innerHTML = defaultLangObj[key];
+        });
+        
+        // 2. Fetch the dataset from Hugging Face
+        fetchHerbs();
+
+    </script>
