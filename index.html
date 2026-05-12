@@ -8,15 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Tối ưu thanh cuộn cho danh sách thuốc */
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Đảm bảo trang luôn vừa màn hình */
         body { height: 100vh; overflow: hidden; }
-        main { height: calc(100vh - 140px); } /* Trừ đi header và footer */
+        main { height: calc(100vh - 140px); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col font-sans">
@@ -25,154 +22,274 @@
         <div class="flex items-center space-x-3">
             <div class="bg-emerald-600 text-white p-2 rounded-lg shadow-md"><i class="fas fa-leaf text-xl"></i></div>
             <div>
-                <h1 class="text-xl font-bold text-slate-800 tracking-tight leading-none">Vi-TCM AI Assistant</h1>
-                <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">Topological Synergy Engine</p>
+                <h1 class="text-xl font-bold text-slate-800 tracking-tight leading-none" data-i18n="title">Vi-TCM AI Assistant</h1>
+                <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1" data-i18n="subtitle">Topological Synergy Engine</p>
             </div>
         </div>
-        <button onclick="toggleHelpModal()" class="text-emerald-700 hover:text-emerald-900 font-bold text-sm flex items-center bg-emerald-100 hover:bg-emerald-200 px-4 py-2 rounded-full transition shadow-sm">
-            <i class="fas fa-question-circle mr-2"></i> Trợ giúp
-        </button>
+        <div class="flex items-center space-x-3">
+            <div class="bg-slate-100 p-1 rounded-full flex border border-slate-200 cursor-pointer text-xs font-bold shadow-sm" onclick="toggleLanguage()">
+                <div id="btnEN" class="px-3 py-1 rounded-full bg-emerald-600 text-white transition">EN</div>
+                <div id="btnVI" class="px-3 py-1 rounded-full text-slate-500 hover:text-slate-700 transition">VI</div>
+            </div>
+            <button onclick="toggleHelpModal()" class="text-emerald-700 hover:text-emerald-900 font-bold text-sm flex items-center bg-emerald-100 hover:bg-emerald-200 px-4 py-2 rounded-full transition shadow-sm">
+                <i class="fas fa-question-circle mr-2"></i> <span data-i18n="helpBtn">Help</span>
+            </button>
+        </div>
     </header>
 
     <main class="flex flex-col md:flex-row max-w-screen-2xl mx-auto w-full overflow-hidden">
         
         <div class="w-full md:w-1/4 bg-white border-r border-slate-200 p-5 flex flex-col shadow-sm">
             <h2 class="text-sm font-bold mb-3 text-slate-700 flex items-center">
-                <i class="fas fa-book-medical mr-2 text-emerald-500"></i> Dược Điển (714 vị)
+                <i class="fas fa-book-medical mr-2 text-emerald-500"></i> <span data-i18n="dbTitle">Pharmacopoeia (714 herbs)</span>
             </h2>
             <div class="relative mb-3">
                 <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
-                <input type="text" id="searchInput" placeholder="Tìm tên thuốc..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition text-sm">
+                <input type="text" id="searchInput" class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition text-sm">
             </div>
             
             <div id="herbList" class="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                <div class="text-center text-slate-400 mt-10"><i class="fas fa-spinner fa-spin text-xl mb-2"></i><br><span class="text-xs">Đang tải dữ liệu AI...</span></div>
+                <div class="text-center text-slate-400 mt-10"><i class="fas fa-spinner fa-spin text-xl mb-2"></i><br><span class="text-xs" data-i18n="loadingDB">Connecting to AI Server...</span></div>
             </div>
         </div>
 
         <div class="w-full md:w-1/3 bg-slate-50 p-5 flex flex-col border-r border-slate-200">
             <h2 class="text-sm font-bold mb-3 text-slate-700 flex items-center">
-                <i class="fas fa-mortar-pestle mr-2 text-emerald-500"></i> Bát Thuốc Kỹ Thuật Số
+                <i class="fas fa-mortar-pestle mr-2 text-emerald-500"></i> <span data-i18n="bowlTitle">Digital Prescription Bowl</span>
             </h2>
             
             <div id="prescriptionBowl" class="flex-1 bg-white rounded-xl shadow-inner border-2 border-dashed border-slate-200 p-4 flex flex-wrap content-start gap-2 overflow-y-auto custom-scrollbar">
                 <div id="emptyState" class="text-slate-400 text-xs w-full text-center mt-12 flex flex-col items-center">
                     <i class="fas fa-hand-pointer text-3xl mb-3 text-slate-200"></i>
-                    <p>Chọn thuốc từ danh sách bên trái<br>để xây dựng bài thuốc lâm sàng.</p>
+                    <p data-i18n="emptyBowl">Select herbs from the left panel<br>to build your clinical formulation.</p>
                 </div>
             </div>
 
             <button id="analyzeBtn" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 flex justify-center items-center opacity-50 cursor-not-allowed transform hover:-translate-y-0.5" disabled>
-                <i class="fas fa-microscope mr-2"></i> Phân Tích Hiệp Đồng Tô Pô
+                <i class="fas fa-microscope mr-2"></i> <span data-i18n="analyzeBtn">Analyze Topological Synergy</span>
             </button>
-            <p class="text-[10px] text-center text-slate-500 mt-2 font-medium tracking-tight">Cần ít nhất 3 vị thuốc để tính toán cấu trúc hình học.</p>
+            <p class="text-[10px] text-center text-slate-500 mt-2 font-medium tracking-tight" data-i18n="analyzeSub">Requires at least 3 herbs to compute continuous geometry.</p>
         </div>
 
         <div class="w-full md:w-5/12 bg-white p-5 flex flex-col shadow-sm">
             <h2 class="text-sm font-bold mb-3 text-slate-700 flex items-center">
-                <i class="fas fa-clipboard-list mr-2 text-emerald-500"></i> Kết Quả Phân Tích Toàn Diện
+                <i class="fas fa-clipboard-list mr-2 text-emerald-500"></i> <span data-i18n="resultTitle">Comprehensive Analysis Output</span>
             </h2>
             
             <div id="resultsPanel" class="hidden flex-col h-full overflow-y-auto pr-2 custom-scrollbar space-y-4">
                 <div class="bg-slate-900 rounded-xl p-5 text-center text-white shadow-md relative overflow-hidden shrink-0">
-                    <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Điểm Hiệp Đồng Dự Đoán</div>
+                    <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1" data-i18n="scoreLabel">Predicted Synergy Score</div>
                     <div class="text-5xl font-black mb-1" id="scoreDisplay">0%</div>
-                    <div class="text-[10px] text-slate-400" id="loopDisplay">0 Vòng lặp hiệp đồng ($H_1$)</div>
+                    <div class="text-[10px] text-slate-400" id="loopDisplay">0 Synergistic Loops ($H_1$)</div>
                 </div>
 
                 <div class="grid grid-cols-1 gap-2 shrink-0">
                     <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                        <h3 class="text-blue-800 font-bold text-[11px] mb-1 flex items-center"><i class="fas fa-user-md mr-2"></i> Cho Bác Sĩ & Dược Lý Học</h3>
+                        <h3 class="text-blue-800 font-bold text-[11px] mb-1 flex items-center"><i class="fas fa-user-md mr-2"></i> <span data-i18n="forDoc">For Doctors & Pharmacologists</span></h3>
                         <p id="recDoctor" class="text-[10px] text-blue-900 leading-normal"></p>
                     </div>
                     <div class="bg-purple-50 border border-purple-100 rounded-lg p-3">
-                        <h3 class="text-purple-800 font-bold text-[11px] mb-1 flex items-center"><i class="fas fa-user-nurse mr-2"></i> Cho Y Tá & Chăm Sóc</h3>
+                        <h3 class="text-purple-800 font-bold text-[11px] mb-1 flex items-center"><i class="fas fa-user-nurse mr-2"></i> <span data-i18n="forNurse">For Nurses & Caregivers</span></h3>
                         <p id="recNurse" class="text-[10px] text-purple-900 leading-normal"></p>
                     </div>
                     <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-                        <h3 class="text-emerald-800 font-bold text-[11px] mb-1 flex items-center"><i class="fas fa-user mr-2"></i> Cho Bệnh Nhân</h3>
+                        <h3 class="text-emerald-800 font-bold text-[11px] mb-1 flex items-center"><i class="fas fa-user mr-2"></i> <span data-i18n="forPatient">For Patients & Public</span></h3>
                         <p id="recPatient" class="text-[10px] text-emerald-900 leading-normal"></p>
-                        <p class="text-[9px] text-emerald-700 mt-1 italic font-semibold">* Miễn trừ trách nhiệm: Luôn tham khảo ý kiến bác sĩ trước khi sử dụng.</p>
+                        <p class="text-[9px] text-emerald-700 mt-1 italic font-semibold" data-i18n="disclaimer">* Disclaimer: Always consult a licensed medical professional before use.</p>
                     </div>
                 </div>
 
-                <div class="flex-1 min-h-[180px] border border-slate-100 rounded-lg p-3 shadow-sm">
+                <div class="flex-1 min-h-[180px] border border-slate-100 rounded-lg p-3 shadow-sm relative">
                     <canvas id="tdaChart"></canvas>
                 </div>
             </div>
 
             <div id="loadingPanel" class="hidden flex-col items-center justify-center h-full text-emerald-600">
                 <i class="fas fa-atom fa-spin text-5xl mb-4 opacity-80"></i>
-                <p class="font-bold text-sm animate-pulse">Đang tính toán Đa tạp Euclidean...</p>
+                <p class="font-bold text-sm animate-pulse" data-i18n="computing">Computing Euclidean Manifold...</p>
             </div>
 
             <div id="waitingPanel" class="flex flex-col items-center justify-center h-full text-slate-300">
                 <i class="fas fa-laptop-medical text-6xl mb-4 opacity-30"></i>
-                <p class="text-center text-xs px-10 text-slate-500 font-medium">Hệ thống AI đang đợi dữ liệu bài thuốc để phân tích cơ chế hiệp đồng...</p>
+                <p class="text-center text-xs px-10 text-slate-500 font-medium" data-i18n="waitingMsg">Waiting for input. The AI will mathematically evaluate your prescription's multi-target synergy mechanisms.</p>
             </div>
         </div>
     </main>
 
     <footer class="bg-white border-t border-slate-200 py-3 text-center shrink-0 h-[70px] flex flex-col justify-center">
         <p class="text-xs text-slate-700 font-semibold">
-            &copy; 2026, by <span class="text-emerald-700">Vo Thi Kim Anh</span>. All rights reserved.
+            &copy; 2026, by <span class="text-emerald-700">Vo Thi Kim Anh</span>. <span data-i18n="footerRights">All rights reserved.</span>
         </p>
         <p class="text-[10px] text-slate-400 italic">
-            Dựa trên nghiên cứu: "Knowledge-Driven Topological Data Analysis in Traditional Medicine"
+            <span data-i18n="footerPaper">Based on the research paper:</span> "Knowledge-Driven Topological Data Analysis in Traditional Medicine"
         </p>
     </footer>
 
     <div id="helpModal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 overflow-hidden flex flex-col max-h-[85vh]">
             <div class="bg-emerald-700 px-5 py-3 flex justify-between items-center text-white">
-                <h2 class="text-lg font-bold"><i class="fas fa-info-circle mr-2"></i> Hướng Dẫn Sử Dụng</h2>
+                <h2 class="text-lg font-bold"><i class="fas fa-info-circle mr-2"></i> <span id="mTitle">User Guide & Documentation</span></h2>
                 <button onclick="toggleHelpModal()" class="text-white hover:text-emerald-200 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-5 overflow-y-auto text-slate-700 text-sm space-y-4 custom-scrollbar">
-                <p>Chào mừng bạn đến với <strong>Hệ thống Hỗ trợ Quyết định Lâm sàng Tô Pô (Topological CDSS)</strong>.</p>
+                <p id="mIntro">Welcome to the <strong>Topological CDSS Platform</strong>. This tool translates traditional medicine knowledge into mathematical algorithms.</p>
                 <div class="flex gap-3 items-start">
                     <div class="bg-emerald-100 text-emerald-800 rounded-full w-6 h-6 flex items-center justify-center font-bold flex-shrink-0 text-xs">1</div>
                     <div>
-                        <h3 class="font-bold text-slate-800 mb-1">Chọn Vị Thuốc</h3>
-                        <p class="text-xs text-slate-600">Tìm kiếm trên Dược điển (cột trái) và click chọn các vị thuốc để đưa vào Bát thuốc. Cần tối thiểu 3 vị.</p>
+                        <h3 class="font-bold text-slate-800 mb-1" id="m1Title">Select Your Herbs</h3>
+                        <p class="text-xs text-slate-600" id="m1Desc">Search the Pharmacopoeia database on the left. Click on herbs to add them to the central Digital Prescription Bowl. A minimum of 3 herbs is required.</p>
                     </div>
                 </div>
                 <div class="flex gap-3 items-start">
                     <div class="bg-emerald-100 text-emerald-800 rounded-full w-6 h-6 flex items-center justify-center font-bold flex-shrink-0 text-xs">2</div>
                     <div>
-                        <h3 class="font-bold text-slate-800 mb-1">Phân Tích AI</h3>
-                        <p class="text-xs text-slate-600">Nhấn nút <strong>Phân Tích Hiệp Đồng</strong>. Hệ thống sẽ tính toán không gian đa chiều và tìm các cấu trúc hình học (vòng lặp $H_1$) giữa các vị thuốc.</p>
+                        <h3 class="font-bold text-slate-800 mb-1" id="m2Title">Execute Topological Analysis</h3>
+                        <p class="text-xs text-slate-600" id="m2Desc">Click <strong>Analyze Topological Synergy</strong>. The AI converts properties into binary vectors and uses Persistent Homology to find geometric structures.</p>
                     </div>
                 </div>
                 <div class="flex gap-3 items-start">
                     <div class="bg-emerald-100 text-emerald-800 rounded-full w-6 h-6 flex items-center justify-center font-bold flex-shrink-0 text-xs">3</div>
                     <div>
-                        <h3 class="font-bold text-slate-800 mb-1">Đọc Kết Quả</h3>
-                        <p class="text-xs text-slate-600">Hệ thống sẽ dịch các thông số toán học phức tạp thành các lời khuyên thực tiễn riêng biệt cho Bác sĩ, Y tá và Bệnh nhân ở cột bên phải.</p>
+                        <h3 class="font-bold text-slate-800 mb-1" id="m3Title">Read the Audience-Specific Output</h3>
+                        <p class="text-xs text-slate-600" id="m3Desc">The system translates complex math into distinct advice for Doctors (pharmacological loops), Nurses (care protocols), and Patients (easy explanations).</p>
                     </div>
                 </div>
             </div>
             <div class="px-5 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button onclick="toggleHelpModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1.5 px-5 rounded text-sm transition">Đã hiểu</button>
+                <button onclick="toggleHelpModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1.5 px-5 rounded text-sm transition" id="mBtn">Understood</button>
             </div>
         </div>
     </div>
 
     <script>
         // =========================================================================
-        // URL API HUGGING FACE CHÍNH XÁC CỦA BẠN
+        // YOUR API URL
         // =========================================================================
         const API_URL = "https://vothikimanh-vitcm-ai-engine.hf.space"; 
         
         let allHerbs = [];
         let selectedHerbs = new Set();
         let chartInstance = null;
+        let lastAnalysisData = null; // Store data to re-render chart on lang toggle
+        let currentLang = 'en';
 
+        // --- I18N DICTIONARY ---
+        const i18n = {
+            en: {
+                title: "Vi-TCM AI Assistant", subtitle: "Topological Synergy Engine",
+                helpBtn: "Help", dbTitle: "Pharmacopoeia (714 herbs)", searchPh: "Search for an herb...", loadingDB: "Connecting to AI Server...",
+                bowlTitle: "Digital Prescription Bowl", emptyBowl: "Select herbs from the left panel<br>to build your clinical formulation.",
+                analyzeBtn: "Analyze Topological Synergy", analyzeSub: "Requires at least 3 herbs to compute continuous geometry.",
+                resultTitle: "Comprehensive Analysis Output", scoreLabel: "Predicted Synergy Score",
+                loopText: "Synergistic Loops ($H_1$)", forDoc: "For Doctors & Pharmacologists", forNurse: "For Nurses & Caregivers",
+                forPatient: "For Patients & Public", disclaimer: "* Disclaimer: Always consult a licensed medical professional before use.",
+                computing: "Computing Euclidean Manifold...", waitingMsg: "Waiting for input. The AI will mathematically evaluate your prescription's multi-target synergy mechanisms.",
+                footerRights: "All rights reserved.", footerPaper: "Based on the research paper:",
+                
+                // Chart & Alerts
+                cLabel0: "Betti-0 (Pharmacological Components)", cLabel1: "Betti-1 (Synergistic Interactions)",
+                cX: "Euclidean Radius", cY: "Topological Feature Count", apiErr: "Backend Offline. Please ensure Hugging Face Space is running.",
+                
+                // Recommendations (High)
+                docHigh: "<strong>High Structural Complexity:</strong> Detected {L} topological $H_1$ loops in the Euclidean manifold. This suggests strong multi-target binding capabilities. Ideal formulation for chronic, complex syndromes.",
+                nurHigh: "<strong>High Potency:</strong> This is a highly synergistic formulation. Ensure strict adherence to prescribed dosage. Monitor patient vitals closely.",
+                patHigh: "<strong>Excellent Compatibility:</strong> The herbs in this prescription work together like a well-coordinated team to target multiple aspects of your illness at once.",
+                // Recommendations (Med)
+                docMed: "<strong>Moderate Connectivity:</strong> Topological network shows baseline clustering ($H_0$) with limited $H_1$ cycles. Suitable for localized treatments. Consider adding 'Courier' herbs.",
+                nurMed: "<strong>Standard Protocol:</strong> Administer as per standard clinical guidelines. Observe for general symptom improvement.",
+                patMed: "<strong>Good Compatibility:</strong> These herbs support each other nicely to treat your specific symptoms. It is a stable remedy.",
+                // Recommendations (Low)
+                docLow: "<strong>Low Synergy Signature:</strong> Minimal topological interaction detected. Geometrically isolated nodes. May result in poor clinical efficacy for systemic diseases.",
+                nurLow: "<strong>Observation Needed:</strong> Due to low interaction, clinical results may be slower. Report any lack of improvement.",
+                patLow: "<strong>Basic Interaction:</strong> These herbs act independently. It is safe, but it may take longer to see full results.",
+                
+                // Modal
+                mTitle: "User Guide & Documentation", mIntro: "Welcome to the <strong>Topological CDSS Platform</strong>. This tool translates traditional medicine knowledge into mathematical algorithms.",
+                m1Title: "Select Your Herbs", m1Desc: "Search the Pharmacopoeia database on the left. Click on herbs to add them to the central Digital Prescription Bowl. A minimum of 3 herbs is required.",
+                m2Title: "Execute Topological Analysis", m2Desc: "Click <strong>Analyze Topological Synergy</strong>. The AI converts properties into binary vectors and uses Persistent Homology to find geometric structures.",
+                m3Title: "Read the Audience-Specific Output", m3Desc: "The system translates complex math into distinct advice for Doctors (pharmacological loops), Nurses (care protocols), and Patients (easy explanations).",
+                mBtn: "Understood"
+            },
+            vi: {
+                title: "Trợ Lý AI Vi-TCM", subtitle: "Động cơ Hiệp đồng Tô pô",
+                helpBtn: "Trợ giúp", dbTitle: "Dược Điển (714 vị)", searchPh: "Tìm tên thuốc...", loadingDB: "Đang tải dữ liệu AI...",
+                bowlTitle: "Bát Thuốc Kỹ Thuật Số", emptyBowl: "Chọn thuốc từ danh sách bên trái<br>để xây dựng bài thuốc lâm sàng.",
+                analyzeBtn: "Phân Tích Hiệp Đồng Tô Pô", analyzeSub: "Cần ít nhất 3 vị thuốc để tính toán cấu trúc hình học.",
+                resultTitle: "Kết Quả Phân Tích Toàn Diện", scoreLabel: "Điểm Hiệp Đồng Dự Đoán",
+                loopText: "Vòng lặp hiệp đồng ($H_1$)", forDoc: "Cho Bác Sĩ & Dược Lý Học", forNurse: "Cho Y Tá & Điều Dưỡng",
+                forPatient: "Cho Bệnh Nhân", disclaimer: "* Cảnh báo: Luôn tham khảo ý kiến bác sĩ trước khi sử dụng.",
+                computing: "Đang tính toán Đa tạp Euclidean...", waitingMsg: "Hệ thống AI đang đợi dữ liệu bài thuốc để phân tích cơ chế hiệp đồng đa mục tiêu.",
+                footerRights: "Đã đăng ký bản quyền.", footerPaper: "Dựa trên nghiên cứu:",
+                
+                cLabel0: "Betti-0 (Cụm Dược Lý)", cLabel1: "Betti-1 (Vòng lặp Hiệp Đồng)",
+                cX: "Bán kính Euclidean", cY: "Số lượng Tô pô", apiErr: "Máy chủ AI ngoại tuyến. Đảm bảo Hugging Face Space đang chạy.",
+                
+                docHigh: "<strong>Độ phức tạp cấu trúc cao:</strong> Phát hiện {L} vòng lặp tô pô $H_1$. Thể hiện cơ chế tác động đa mục tiêu cực mạnh. Bài thuốc lý tưởng cho hội chứng mạn tính, phức tạp.",
+                nurHigh: "<strong>Dược lực mạnh:</strong> Cần tuân thủ nghiêm ngặt liều lượng kê đơn. Theo dõi sát sao sinh hiệu của bệnh nhân sau liều đầu tiên do tính hiệp đồng cao.",
+                patHigh: "<strong>Tương thích hoàn hảo:</strong> Các vị thuốc kết hợp cực kỳ ăn ý, giúp điều trị nhiều triệu chứng cùng lúc. Vui lòng uống thuốc đúng chỉ dẫn.",
+                docMed: "<strong>Kết nối mức độ vừa:</strong> Mạng lưới thể hiện cụm dược lý cơ bản ($H_0$). Phù hợp điều trị triệu chứng đơn lẻ. Có thể cân nhắc thêm thuốc 'Sứ' để dẫn thuốc.",
+                nurMed: "<strong>Phác đồ chuẩn:</strong> Chăm sóc và cho uống thuốc theo tiêu chuẩn lâm sàng thông thường. Quan sát sự cải thiện triệu chứng.",
+                patMed: "<strong>Tương thích tốt:</strong> Bài thuốc hoạt động ổn định và an toàn cho tình trạng hiện tại của bạn.",
+                docLow: "<strong>Tương tác rời rạc:</strong> Ít vòng lặp hình học được tìm thấy. Các vị thuốc hoạt động độc lập. Ít có tác dụng đối với bệnh lý toàn thân.",
+                nurLow: "<strong>Cần theo dõi thêm:</strong> Thuốc có tác dụng chậm. Hãy báo cáo lại với bác sĩ nếu bệnh nhân không thấy thuyên giảm.",
+                patLow: "<strong>Tương tác cơ bản:</strong> Các vị thuốc làm việc độc lập. Sẽ cần một thời gian để thấy rõ hiệu quả, bạn hãy kiên nhẫn nhé.",
+
+                mTitle: "Hướng Dẫn Sử Dụng", mIntro: "Chào mừng bạn đến với <strong>Hệ thống CDSS Tô Pô</strong>. Công cụ này chuyển đổi kiến thức y học cổ truyền thành thuật toán.",
+                m1Title: "Chọn Vị Thuốc", m1Desc: "Tìm kiếm trên Dược điển (cột trái) và click chọn các vị thuốc để đưa vào Bát thuốc. Cần tối thiểu 3 vị.",
+                m2Title: "Phân Tích AI", m2Desc: "Nhấn nút <strong>Phân Tích Hiệp Đồng</strong>. Hệ thống tính toán không gian đa chiều và tìm các cấu trúc hình học (Persistent Homology).",
+                m3Title: "Đọc Kết Quả", m3Desc: "Hệ thống dịch các thông số toán học thành lời khuyên riêng biệt cho Bác sĩ (cơ chế), Y tá (chăm sóc) và Bệnh nhân (dễ hiểu).",
+                mBtn: "Đã hiểu"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'vi' : 'en';
+            
+            // Toggle Button Styles
+            if(currentLang === 'en') {
+                document.getElementById('btnEN').className = "px-3 py-1 rounded-full bg-emerald-600 text-white transition";
+                document.getElementById('btnVI').className = "px-3 py-1 rounded-full text-slate-500 hover:text-slate-700 transition";
+            } else {
+                document.getElementById('btnVI').className = "px-3 py-1 rounded-full bg-emerald-600 text-white transition";
+                document.getElementById('btnEN').className = "px-3 py-1 rounded-full text-slate-500 hover:text-slate-700 transition";
+            }
+
+            // Apply Dictionary to UI
+            const t = i18n[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerHTML = t[key];
+            });
+            
+            // Update Placeholders
+            document.getElementById('searchInput').placeholder = t.searchPh;
+
+            // Update Modal
+            document.getElementById('mTitle').innerHTML = t.mTitle;
+            document.getElementById('mIntro').innerHTML = t.mIntro;
+            document.getElementById('m1Title').innerHTML = t.m1Title;
+            document.getElementById('m1Desc').innerHTML = t.m1Desc;
+            document.getElementById('m2Title').innerHTML = t.m2Title;
+            document.getElementById('m2Desc').innerHTML = t.m2Desc;
+            document.getElementById('m3Title').innerHTML = t.m3Title;
+            document.getElementById('m3Desc').innerHTML = t.m3Desc;
+            document.getElementById('mBtn').innerHTML = t.mBtn;
+
+            // Re-render recommendations & chart if analysis exists
+            if (lastAnalysisData) {
+                document.getElementById('loopDisplay').innerText = `${lastAnalysisData.loops} ${t.loopText}`;
+                generateComprehensiveRecommendations(lastAnalysisData.score, lastAnalysisData.loops);
+                renderChart(lastAnalysisData.betti0, lastAnalysisData.betti1, lastAnalysisData.maxRadius);
+            }
+        }
+
+        // --- CORE LOGIC ---
         function toggleHelpModal() {
             document.getElementById('helpModal').classList.toggle('hidden');
         }
 
         async function fetchHerbs() {
+            document.getElementById('searchInput').placeholder = i18n[currentLang].searchPh;
             try {
                 const res = await fetch(`${API_URL}/api/herbs`);
                 const data = await res.json();
@@ -182,7 +299,7 @@
                 document.getElementById('herbList').innerHTML = `
                     <div class="bg-red-50 text-red-600 p-3 rounded text-xs border border-red-200 text-center mx-2 mt-4">
                         <i class="fas fa-exclamation-triangle text-lg mb-1"></i><br>
-                        <strong>Máy chủ AI ngoại tuyến</strong><br>Vui lòng đảm bảo Hugging Face Space đang chạy.
+                        ${i18n[currentLang].apiErr}
                     </div>`;
             }
         }
@@ -210,152 +327,4 @@
             updatePrescriptionBowl();
         }
 
-        function updatePrescriptionBowl() {
-            const bowl = document.getElementById('prescriptionBowl');
-            const emptyState = document.getElementById('emptyState');
-            const btn = document.getElementById('analyzeBtn');
-
-            Array.from(bowl.children).forEach(c => { if(c.id !== 'emptyState') c.remove(); });
-
-            if (selectedHerbs.size === 0) {
-                emptyState.style.display = 'flex';
-            } else {
-                emptyState.style.display = 'none';
-                selectedHerbs.forEach(herb => {
-                    const chip = document.createElement('div');
-                    chip.className = "bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center shadow-sm hover:bg-red-100 hover:text-red-800 hover:border-red-300 transition cursor-pointer group";
-                    chip.innerHTML = `${herb} <i class="fas fa-times ml-1.5 text-emerald-600 group-hover:text-red-600 transition"></i>`;
-                    chip.onclick = () => toggleHerb(herb);
-                    bowl.appendChild(chip);
-                });
-            }
-
-            if (selectedHerbs.size >= 3) {
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                btn.disabled = false;
-            } else {
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btn.disabled = true;
-            }
-        }
-
-        function generateComprehensiveRecommendations(score, loops) {
-            const docOutput = document.getElementById('recDoctor');
-            const nurseOutput = document.getElementById('recNurse');
-            const patientOutput = document.getElementById('recPatient');
-
-            if (score >= 75) {
-                docOutput.innerHTML = `<strong>Độ phức tạp cấu trúc cao:</strong> Phát hiện ${loops} vòng lặp tô pô $H_1$ trong không gian Euclidean. Thể hiện cơ chế tác động đa mục tiêu cực mạnh. Bài thuốc lý tưởng cho các hội chứng mạn tính, phức tạp.`;
-                nurseOutput.innerHTML = `<strong>Dược lực mạnh:</strong> Cần tuân thủ nghiêm ngặt liều lượng kê đơn. Theo dõi sát sao sinh hiệu của bệnh nhân sau liều đầu tiên do tính hiệp đồng thuốc rất cao.`;
-                patientOutput.innerHTML = `<strong>Tương thích hoàn hảo:</strong> Các vị thuốc kết hợp cực kỳ ăn ý, giúp điều trị nhiều triệu chứng cùng lúc. Vui lòng uống thuốc đúng giờ và theo chỉ dẫn.`;
-            } else if (score >= 40) {
-                docOutput.innerHTML = `<strong>Kết nối mức độ vừa:</strong> Mạng lưới thể hiện cụm dược lý cơ bản ($H_0$) với một vài vòng lặp nhỏ. Phù hợp điều trị triệu chứng đơn lẻ. Có thể cân nhắc thêm thuốc 'Sứ' để dẫn thuốc tốt hơn.`;
-                nurseOutput.innerHTML = `<strong>Phác đồ chuẩn:</strong> Chăm sóc và cho uống thuốc theo tiêu chuẩn lâm sàng thông thường. Quan sát sự cải thiện triệu chứng.`;
-                patientOutput.innerHTML = `<strong>Tương thích tốt:</strong> Bài thuốc hoạt động ổn định và an toàn cho tình trạng hiện tại của bạn.`;
-            } else {
-                docOutput.innerHTML = `<strong>Tương tác rời rạc:</strong> Ít vòng lặp hình học được tìm thấy. Các vị thuốc hoạt động độc lập. Ít có tác dụng đối với các bệnh lý toàn thân.`;
-                nurseOutput.innerHTML = `<strong>Cần theo dõi thêm:</strong> Thuốc có thể tác dụng chậm hơn. Hãy báo cáo lại với bác sĩ nếu bệnh nhân không thấy thuyên giảm.`;
-                patientOutput.innerHTML = `<strong>Tương tác cơ bản:</strong> Các vị thuốc làm việc độc lập. Sẽ cần một thời gian để thấy rõ hiệu quả, bạn hãy kiên nhẫn nhé.`;
-            }
-        }
-
-        document.getElementById('analyzeBtn').addEventListener('click', async () => {
-            document.getElementById('waitingPanel').classList.add('hidden');
-            document.getElementById('resultsPanel').classList.add('hidden');
-            document.getElementById('loadingPanel').classList.remove('hidden');
-            document.getElementById('loadingPanel').classList.add('flex');
-
-            try {
-                const response = await fetch(`${API_URL}/api/analyze`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ herbs: Array.from(selectedHerbs) })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    alert(data.error);
-                    document.getElementById('loadingPanel').classList.add('hidden');
-                    document.getElementById('waitingPanel').classList.remove('hidden');
-                    return;
-                }
-
-                document.getElementById('scoreDisplay').innerText = data.synergy_score + "%";
-                document.getElementById('loopDisplay').innerText = `${data.h1_loops} Vòng lặp hiệp đồng ($H_1$)`;
-                
-                generateComprehensiveRecommendations(data.synergy_score, data.h1_loops);
-                renderChart(data.betti_0, data.betti_1, data.max_radius);
-
-                document.getElementById('loadingPanel').classList.add('hidden');
-                document.getElementById('loadingPanel').classList.remove('flex');
-                document.getElementById('resultsPanel').classList.remove('hidden');
-                document.getElementById('resultsPanel').classList.add('flex');
-
-            } catch (e) {
-                alert("Lỗi kết nối AI Engine. Vui lòng kiểm tra lại Hugging Face Space.");
-                document.getElementById('loadingPanel').classList.add('hidden');
-                document.getElementById('waitingPanel').classList.remove('hidden');
-            }
-        });
-
-        function renderChart(betti0, betti1, maxRadius) {
-            const ctx = document.getElementById('tdaChart').getContext('2d');
-            const labels = Array.from({length: betti0.length}, (_, i) => ((i / (betti0.length - 1)) * maxRadius).toFixed(2));
-
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Betti-0 (Cụm Dược Lý)',
-                            data: betti0,
-                            borderColor: '#e74c3c',
-                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            borderWidth: 1.5
-                        },
-                        {
-                            label: 'Betti-1 (Vòng lặp Hiệp Đồng)',
-                            data: betti1,
-                            borderColor: '#3498db',
-                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            borderWidth: 1.5
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { position: 'top', labels: { boxWidth: 10, font: {size: 9} } }
-                    },
-                    scales: {
-                        x: { 
-                            title: { display: true, text: 'Bán kính Euclidean', font: {size: 9} },
-                            ticks: { maxTicksLimit: 8, font: {size: 8} }
-                        },
-                        y: { 
-                            title: { display: true, text: 'Số lượng Tô pô', font: {size: 9} },
-                            ticks: { precision: 0, font: {size: 8} },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        // Khởi động
-        fetchHerbs();
-    </script>
-</body>
-</html>
+        function updatePrescriptionBowl()
