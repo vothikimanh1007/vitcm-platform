@@ -345,21 +345,33 @@
         }
 
         function updatePrescriptionBowl() {
-            const bowl = document.getElementById('prescriptionBowl');
-            if (selectedHerbs.size === 0) {
-                // Show empty state text from dictionary
-                bowl.innerHTML = `<div class="text-slate-400 italic text-sm text-center py-4">${i18n[currentLang].emptyBowl}</div>`;
-                return;
-            }
-            
-            bowl.innerHTML = '';
-            selectedHerbs.forEach(herb => {
-                const tag = document.createElement('span');
-                tag.className = "inline-flex items-center px-3 py-1 m-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold shadow-sm transition hover:bg-emerald-200";
-                tag.innerHTML = `${herb} <i class="fas fa-times ml-2 cursor-pointer text-emerald-600 hover:text-red-500 transition" onclick="toggleHerb('${herb}')"></i>`;
-                bowl.appendChild(tag);
-            });
-        }
+    const bowl = document.getElementById('prescriptionBowl');
+    const analyzeBtn = document.getElementById('analyzeBtn'); // Grab the button
+    
+    // 1. Update the Bowl UI
+    if (selectedHerbs.size === 0) {
+        bowl.innerHTML = `<div class="text-slate-400 italic text-sm text-center py-4">${i18n[currentLang].emptyBowl}</div>`;
+    } else {
+        bowl.innerHTML = '';
+        selectedHerbs.forEach(herb => {
+            const tag = document.createElement('span');
+            tag.className = "inline-flex items-center px-3 py-1 m-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold shadow-sm transition hover:bg-emerald-200";
+            tag.innerHTML = `${herb} <i class="fas fa-times ml-2 cursor-pointer text-emerald-600 hover:text-red-500 transition" onclick="toggleHerb('${herb}')"></i>`;
+            bowl.appendChild(tag);
+        });
+    }
+
+    // 2. DYNAMIC BUTTON LOGIC: Wake up the button if 3 or more herbs are selected
+    if (selectedHerbs.size >= 3) {
+        analyzeBtn.disabled = false; // Enable clicking
+        analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed'); // Remove grayed-out look
+        analyzeBtn.classList.add('hover:bg-emerald-700', 'hover:-translate-y-0.5'); // Add hover animations
+    } else {
+        analyzeBtn.disabled = true; // Disable clicking
+        analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed'); // Add grayed-out look
+        analyzeBtn.classList.remove('hover:bg-emerald-700', 'hover:-translate-y-0.5'); // Remove hover animations
+    }
+}
 
         async function analyzeSynergy() {
             // Must have at least 3 herbs for Topological math
