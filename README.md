@@ -1,7 +1,7 @@
 # 🌿 Vi-TCM AI Assistant: Topological Clinical Decision Support System
 
 [![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Backend%20AI-yellow)](https://huggingface.co/spaces/YOUR_USERNAME/vitcm-ai-engine)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Frontend%20GUI-blue)](https://YOUR_USERNAME.github.io/vitcm-platform/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-blue)](https://vothikimanh1007.github.io/vitcm-platform/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 **Vi-TCM AI Assistant** is an advanced Clinical Decision Support System (CDSS) that applies Topological Data Analysis (TDA) to mathematically quantify the macroscopic synergy of herbal formulations in Vietnamese Traditional Medicine (TM).
