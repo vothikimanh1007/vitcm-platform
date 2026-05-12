@@ -289,20 +289,37 @@
         }
 
         async function fetchHerbs() {
-            document.getElementById('searchInput').placeholder = i18n[currentLang].searchPh;
-            try {
-                const res = await fetch(`${API_URL}/api/herbs`);
-                const data = await res.json();
-                allHerbs = data.herbs;
-                renderHerbList(allHerbs);
-            } catch (e) {
-                document.getElementById('herbList').innerHTML = `
-                    <div class="bg-red-50 text-red-600 p-3 rounded text-xs border border-red-200 text-center mx-2 mt-4">
-                        <i class="fas fa-exclamation-triangle text-lg mb-1"></i><br>
-                        ${i18n[currentLang].apiErr}
-                    </div>`;
-            }
-        }
+            console.log("✅ CHECKPOINT 1: fetchHerbs() has started!");
+    
+    try {
+        // 1. Test the bilingual dictionary
+        console.log("✅ CHECKPOINT 2: Checking language dictionary...");
+        document.getElementById('searchInput').placeholder = i18n[currentLang].searchPh;
+        
+        // 2. Test the API connection
+        console.log(`✅ CHECKPOINT 3: Attempting to connect to ${API_URL}/api/herbs`);
+        const res = await fetch(`${API_URL}/api/herbs`);
+        
+        // 3. Test the data structure
+        console.log("✅ CHECKPOINT 4: Connection made, parsing data...");
+        const data = await res.json();
+        console.log("📦 THE DATA RETURNED IS:", data);
+        
+        // 4. Fallback in case the API returns a list instead of a dictionary
+        allHerbs = data.herbs || data; 
+        
+        renderHerbList(allHerbs);
+        console.log("✅ CHECKPOINT 5: Success! Herbs rendered to the screen.");
+
+    } catch (e) {
+        console.error("❌ CRITICAL ERROR CAUGHT:", e);
+        document.getElementById('herbList').innerHTML = `
+            <div class="bg-red-50 text-red-600 p-3 rounded text-xs border border-red-200 text-center mx-2 mt-4">
+                <i class="fas fa-exclamation-triangle text-lg mb-1"></i><br>
+                Error: ${e.message}
+            </div>`;
+    }
+}
 
         function renderHerbList(herbs) {
             const list = document.getElementById('herbList');
